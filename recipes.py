@@ -62,11 +62,11 @@ class Recipe:
         """Возвращает новый рецепт, пропорционально изменяя количество ингредиентов"""
         if not self.is_valid_ratio(ratio):
             raise ValueError("Коэффициент масштабирования должен быть положительным числом")
-        
+
         scaled_ingredients = []
         for ing in self.ingredients:
             scaled_ing = Ingredient(ing.name, ing.quantity * ratio, ing.unit)
-            scaled_ingredients.append(scaled_ing) 
+            scaled_ingredients.append(scaled_ing)
         return Recipe(self.title, scaled_ingredients)
 
     def __len__(self) -> int:
@@ -79,3 +79,42 @@ class Recipe:
         for ing in self.ingredients:
             result += f" - {ing}\n"
         return result.strip()
+
+class ShoppingList:
+    """Класс для формирования списка покупок на основе рецептов"""
+
+    def __init__(self):
+        self._items: list[tuple[Ingredient, str]] = []
+
+    def add_recipe(self, recipe: Recipe, portions: float) -> None:
+        """Добавляет рецепт в список покупок с учетом количества порций"""
+        if portions <= 0:
+            raise ValueError("Количество порций должно быть положительным")
+        scaled_recipe = recipe.scale(portions)
+        for ingredient in scaled_recipe.ingredients:
+            self._items.append((ingredient, scaled_recipe.title))
+
+    def remove_recipe(self, title: str) -> None:
+        """Удаляет все ингредиенты указанного рецепта из списка покупок"""
+        self._items = [item for item in self._items if item[1] != title]
+
+    def get_list(self) -> list[Ingredient]:
+        """Возвращает итоговый список покупок, отсортированный по названию"""
+        summary = {}
+        for ingredient, _ in self._items:
+            key = (ingredient.name, ingredient.unit)
+            if key in summary:
+                summary[key] += ingredient.quantity
+            else:
+                summary[key] = ingredient.quantity
+        result = [Ingredient(name, quantity, unit) for (name, unit), quantity in summary.items()]
+        result.sort(key=lambda x: x.name)
+        return result
+
+    def __add__(self, other: object) -> 'ShoppingList':
+        """Объединяет два списка покупок в один новый список"""
+        if not isinstance(other, ShoppingList):
+            return NotImplemented
+        new_list = ShoppingList()
+        new_list._items = self._items.copy() + other._items.copy()
+        return new_list
