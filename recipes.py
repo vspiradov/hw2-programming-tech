@@ -118,3 +118,20 @@ class ShoppingList:
         new_list = ShoppingList()
         new_list._items = self._items.copy() + other._items.copy()
         return new_list
+
+class DietaryRecipe(Recipe):
+    """Класс рецепта с указанием диетической категории, наследуется от Recipe"""
+
+    def __init__(self, title: str, diet_type: str, ingredients: list[Ingredient] | None = None):
+        super().__init__(title, ingredients)
+        self.diet_type = diet_type
+
+    def scale(self, ratio: float) -> 'DietaryRecipe':
+        """Возвращает новый объект DietaryRecipe с измененным количеством ингредиентов"""
+        scaled_recipe = super().scale(ratio)
+        return DietaryRecipe(scaled_recipe.title, self.diet_type, scaled_recipe.ingredients)
+
+    def __str__(self) -> str:
+        """Добавляет префикс с типом диеты к строковому представлению рецепта"""
+        parent_str = super().__str__().replace(f"Рецепт: {self.title}", f"{self.title}")
+        return f"[{self.diet_type}] Рецепт: {parent_str}"
