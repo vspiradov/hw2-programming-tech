@@ -1,6 +1,6 @@
 """Модуль для тестирования классов управления рецептами"""
 import pytest
-from recipes import Ingredient, Recipe
+from recipes import Ingredient, Recipe, ShoppingList
 
 def test_ingredient_creation():
     """Проверка правильной инициализации атрибутов ингредиента"""
@@ -76,3 +76,55 @@ def test_recipe_len():
     assert len(recipe) == 1
     recipe.add_ingredient(Ingredient("Сыр", 150.0, "г"))
     assert len(recipe) == 2
+
+# В юнит-тестах проверяем внутреннее состояние объекта (_items)
+def test_shopping_list_add_recipe():
+    """Проверка добавления рецепта и масштабирования порций"""
+    sl = ShoppingList()
+    recipe = Recipe("Блины")
+    recipe.add_ingredient(Ingredient("Мука", 200.0, "г"))
+    sl.add_recipe(recipe, 2.0)
+    assert len(sl._items) == 1
+    assert sl._items[0][0].quantity == 400.0
+    assert sl._items[0][1] == "Блины"
+    with pytest.raises(ValueError, match="Количество порций должно быть положительным"):
+        sl.add_recipe(recipe, 0.0)
+
+def test_shopping_list_remove_recipe():
+    """Проверка удаления рецепта из списка покупок"""
+    sl = ShoppingList()
+    recipe1 = Recipe("Блины", [Ingredient("Мука", 200.0, "г")])
+    recipe2 = Recipe("Омлет", [Ingredient("Яйцо", 2.0, "шт")])
+    sl.add_recipe(recipe1, 1.0)
+    sl.add_recipe(recipe2, 1.0)
+    sl.remove_recipe("Блины")
+    assert len(sl._items) == 1
+    assert sl._items[0][1] == "Омлет"
+    sl.remove_recipe("Пицца")
+    assert len(sl._items) == 1
+
+def test_shopping_list_get_list():
+    """Проверка группировки, суммирования и сортировки списка покупок"""
+    sl = ShoppingList()
+    recipe1 = Recipe("Блины", [Ingredient("Мука", 200.0, "г"), Ingredient("Молоко", 500.0, "мл")])
+    recipe2 = Recipe("Пирог", [Ingredient("Мука", 300.0, "г"), Ingredient("Яблоко", 3.0, "шт")])
+    sl.add_recipe(recipe1, 1.0)
+    sl.add_recipe(recipe2, 1.0)
+    final_list = sl.get_list()
+    assert len(final_list) == 3
+    assert final_list[0].name == "Молоко"
+    assert final_list[1].name == "Мука"
+    assert final_list[2].name == "Яблоко"
+    assert final_list[1].quantity == 500.0
+
+def test_shopping_list_add_lists():
+    """Проверка объединения двух списков покупок"""
+    sl1 = ShoppingList()
+    sl1.add_recipe(Recipe("Блины", [Ingredient("Мука", 200.0, "г")]), 1.0)
+    sl2 = ShoppingList()
+    sl2.add_recipe(Recipe("Омлет", [Ingredient("Яйцо", 2.0, "шт")]), 1.0)
+    sl3 = sl1 + sl2
+    assert isinstance(sl3, ShoppingList)
+    assert len(sl3._items) == 2
+    assert len(sl1._items) == 1
+    assert len(sl2._items) == 1
