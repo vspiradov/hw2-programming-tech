@@ -92,7 +92,7 @@ class ShoppingList:
             raise ValueError("Количество порций должно быть положительным")
         scaled_recipe = recipe.scale(portions)
         for ingredient in scaled_recipe.ingredients:
-            self._items.append((ingredient, scaled_recipe.title))
+            self._items.append((ingredient, recipe.title))
 
     def remove_recipe(self, title: str) -> None:
         """Удаляет все ингредиенты указанного рецепта из списка покупок"""

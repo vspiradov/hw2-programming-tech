@@ -1,6 +1,6 @@
 """Модуль для тестирования классов управления рецептами"""
 import pytest
-from recipes import Ingredient, Recipe, ShoppingList
+from recipes import Ingredient, Recipe, ShoppingList, DietaryRecipe
 
 def test_ingredient_creation():
     """Проверка правильной инициализации атрибутов ингредиента"""
@@ -63,8 +63,10 @@ def test_recipe_scale():
     assert scaled is not recipe#два разных объекта?
     assert scaled.ingredients[0].quantity == 600.0#в новом кол-во изменилось?
     assert recipe.ingredients[0].quantity == 300.0#в старом не изменилось?
-    with pytest.raises(ValueError, match="Коэффициент масштабирования должен быть положительным числом"):
+    with pytest.raises(ValueError):
         recipe.scale(-1.0)
+    with pytest.raises(ValueError):
+        recipe.scale(0.0)
 
 def test_recipe_len():
     """Проверка подсчета уникальных ингредиентов через __len__"""
@@ -76,6 +78,16 @@ def test_recipe_len():
     assert len(recipe) == 1
     recipe.add_ingredient(Ingredient("Сыр", 150.0, "г"))
     assert len(recipe) == 2
+
+def test_recipe_str():
+    """Проверка строкового представления рецепта"""
+    recipe = Recipe("Пицца", [Ingredient("Мука", 300.0, "г")])
+    assert str(recipe) == "Рецепт: Пицца\nИнгредиенты:\n - Мука: 300.0 г"
+
+def test_dietary_recipe_str():
+    """Проверка строкового представления диетического рецепта"""
+    recipe = DietaryRecipe("Пицца", "веган", [Ingredient("Мука", 300.0, "г")])
+    assert str(recipe) == "[веган] Рецепт: Пицца\nИнгредиенты:\n - Мука: 300.0 г"
 
 # В юнит-тестах проверяем внутреннее состояние объекта (_items)
 def test_shopping_list_add_recipe():
@@ -113,9 +125,11 @@ def test_shopping_list_get_list():
     final_list = sl.get_list()
     assert len(final_list) == 3
     assert final_list[0].name == "Молоко"
+    assert final_list[0].quantity == 500.0
     assert final_list[1].name == "Мука"
-    assert final_list[2].name == "Яблоко"
     assert final_list[1].quantity == 500.0
+    assert final_list[2].name == "Яблоко"
+    assert final_list[2].quantity == 3.0
 
 def test_shopping_list_add_lists():
     """Проверка объединения двух списков покупок"""
